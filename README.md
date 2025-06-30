@@ -1,5 +1,3 @@
-# Eurojackpot_Profit_Estimator
-Calculates Eurojackpot profits using Web Scraping
 # Eurojackpot Profit Estimator (Web Scraper)
 
 This script estimates how much Eurojackpot makes after each draw by scraping the official website.  
