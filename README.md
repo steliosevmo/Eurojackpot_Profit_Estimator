@@ -7,6 +7,7 @@ It was created to enhance my web scraping skills with Selenium and is also inspi
 - Automatically extracts total player stakes
 - Extracts prize tiers and winners
 - Calculates estimated payout and "profit"
+- Adds the essential info in a csv file or updates an existing one
 
 ## Disclaimer
 This is **not an accurate representation of real profit** since it excludes taxes, marketing, and operational costs.  
