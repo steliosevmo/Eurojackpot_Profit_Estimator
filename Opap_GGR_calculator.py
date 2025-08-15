@@ -67,8 +67,33 @@ def count_earnings(driver):
     payout_data=list(zip(queue_winners, queue_amounts))#combines the two lists into a list of tuples
     amount_of_earnings=sum(amount * winners for amount, winners in payout_data)
     return amount_of_earnings 
+
+def write_to_csv(file_name,date,total_stakes,total_paid,profit):
+    csv_file_path=file_name
+    all_dates=set() 
+    file_exists=os.path.exists(csv_file_path) #returns true or false if file already exists
+    #adds all dates to all_dates set 
+    if file_exists:
+        with open(csv_file_path,mode='r',newline='',encoding="utf-8-sig" ) as file:
+            reader=csv.DictReader(file)
+            for row in reader:
+                all_dates.add(row['Date'])
+    #if the date already exists in the csv we don't update the csv
+    if date in all_dates:
+        print(f"We already have data for {date}")
+        return 
+    #creates the file ,with the appropriate collumn names, if it doesn't exist and appends the data we extracted   
+    with open(csv_file_path,mode='a',newline='',encoding="utf-8-sig" ) as file:
+        writer=csv.writer(file)
+        if not file_exists:
+            writer.writerow(["Date","Total Stakes","Total Paid","Profit"])
+        writer.writerow([date,f"{total_stakes:,.2f}€",f"{total_paid:,.2f}€",f"{profit:,.2f}€"])
     
-    
+def extract_date(driver):
+    #splits the string that contains all the dates into seperate dates
+    date=driver.find_element(By.CLASS_NAME,"draw-date").text.replace("Ημερομηνία","")
+    return date #most recent date
+
 
 def main():
     driver=setup_driver()
@@ -82,8 +107,8 @@ def main():
 
     profit = total_stakes - total_paid
     
-    # date=extract_date(driver)
-    # print(date)
+    date=extract_date(driver)
+    print(date)
 
     print(f"Tzoker's stakes: {total_stakes:,.2f}€")
 
@@ -91,7 +116,7 @@ def main():
 
     print(f"Tzoker's profit: {profit:,.2f}€")
 
-    # write_to_csv(date,total_stakes,total_paid,profit)
+    write_to_csv("tzoker_results.csv",date,total_stakes,total_paid,profit)
 
 
 
