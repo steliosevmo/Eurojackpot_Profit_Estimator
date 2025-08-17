@@ -57,7 +57,7 @@ class Opap_Games:
 
     def extract_date(self,driver,draw_date_class="draw-date"):
         #splits the string that contains all the dates into seperate dates
-        date=driver.find_element(By.CLASS_NAME,"draw-date").text.replace("Ημερομηνία","")
+        date=driver.find_element(By.CLASS_NAME,draw_date_class).text.replace("Ημερομηνία","")
         return date #most recent date
     
     def count_earnings(self,driver,earnings_class="draw-winners"):
@@ -105,9 +105,28 @@ class Tzoker(Opap_Games):
 
 
 class Lotto(Opap_Games):
-    def __init__(self,driver):
-        self.driver=driver
+    def __init__(self,):
+        self.driver=Opap_Games.setup_driver(self)
         self.file_name="lotto_results.csv"
+    def count_earnings(self,driver,earnings_class="draw-winners"):
+        elements = driver.find_elements(By.XPATH, "//*[contains(@class, 'draw-winners')]")
+        queue_winners=[]#it will contain amount of winners and the amount each winner received.
+        
+        for web_element in elements:
+            if web_element.text=="-":
+                queue_winners.append(0)
+            else:
+                digits_from_text=re.sub("[^\d\.]","", web_element.text).replace(".","")
+                if digits_from_text:#if the string is not empty I turn it into a float
+                    queue_winners.append(int(digits_from_text))
+        for q in queue_winners:
+            print(q)
+        queue_amounts=[1200000.00,12000.00,30.00,2.00,1.00 ]#the amount opap pays for each category
+        payout_data=list(zip(queue_winners, queue_amounts))#combines the two lists into a list of tuples
+        amount_of_earnings=sum(winners * amount for winners, amount in payout_data)
+        return amount_of_earnings
+
+
 
 def main():
     tzoker= Tzoker()
@@ -124,12 +143,19 @@ def main():
     print(f"Tzoker's profit: {profit:,.2f}€")
     tzoker.write_to_csv(tzoker.file_name,date,total_stakes,total_paid,profit)
 
+    lotto=Lotto()
+    lotto.driver.get("https://opaponline.opap.gr/lotto/draws-results")
+    lotto.cookies_handler()
+    total_stakes=lotto.count_stakes(lotto.driver,"draw-total-numbers.should-clear.empty-zero.futuran-now-text-400")
+    total_paid=lotto.count_earnings(lotto.driver)
+    profit = total_stakes - total_paid
+    date=lotto.extract_date(lotto.driver,"row-date.should-clear.futuran-now-text-400")
+    print(date)
+    print(f"Lotto's stakes: {total_stakes:,.2f}€")
+    print(f"Amount paid to players: {total_paid:,.2f}€")
+    print(f"Lotto's profit: {profit:,.2f}€")
+    lotto.write_to_csv(lotto.file_name,date,total_stakes,total_paid,profit)
 
-    # driver.get("https://opaponline.opap.gr/lotto/draws-results")
-    # cookies_handler(driver)
-    # total_stakes=count_stakes(driver,"draw-total-numbers.should-clear.empty-zero.futuran-now-text-400")
-    # print(f"Lotto's stakes: {total_stakes:,.2f}€")
-    # total_paid=count_earnings(driver)
    
     
 
