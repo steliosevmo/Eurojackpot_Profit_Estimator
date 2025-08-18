@@ -13,8 +13,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 """
 Stoxos OPAP:
-Eurojackpot,Tzoker,Proto,Lotto
-Extra 5 , Super 3,Powerspin,Kino 
+Eurojackpot(other site),Tzoker,Proto,Lotto
+Extra 5,Super 3,Powerspin,Kino 
 """
 
 
@@ -129,36 +129,49 @@ class Lotto(Opap_Games):
 
 
 def main():
-    tzoker= Tzoker()
-    driver=tzoker.driver
-    tzoker.driver.get("https://opaponline.opap.gr/tzoker/draws-results")
-    tzoker.cookies_handler()
-    total_stakes=tzoker.count_stakes(driver)
-    total_paid=tzoker.count_earnings(driver)
-    profit = total_stakes - total_paid
-    date=tzoker.extract_date(driver)
-    print(date)
-    print(f"Tzoker's stakes: {total_stakes:,.2f}€")
-    print(f"Amount paid to players: {total_paid:,.2f}€")
-    print(f"Tzoker's profit: {profit:,.2f}€")
-    tzoker.write_to_csv(tzoker.file_name,date,total_stakes,total_paid,profit)
+    # tzoker= Tzoker()
+    # driver=tzoker.driver
+    # tzoker.driver.get("https://opaponline.opap.gr/tzoker/draws-results")
+    # tzoker.cookies_handler()
+    # total_stakes=tzoker.count_stakes(driver)
+    # total_paid=tzoker.count_earnings(driver)
+    # profit = total_stakes - total_paid
+    # date=tzoker.extract_date(driver)
+    # print(date)
+    # print(f"Tzoker's stakes: {total_stakes:,.2f}€")
+    # print(f"Amount paid to players: {total_paid:,.2f}€")
+    # print(f"Tzoker's profit: {profit:,.2f}€")
+    # tzoker.write_to_csv(tzoker.file_name,date,total_stakes,total_paid,profit)
 
-    lotto=Lotto()
-    lotto.driver.get("https://opaponline.opap.gr/lotto/draws-results")
-    lotto.cookies_handler()
-    total_stakes=lotto.count_stakes(lotto.driver,"draw-total-numbers.should-clear.empty-zero.futuran-now-text-400")
-    total_paid=lotto.count_earnings(lotto.driver)
-    profit = total_stakes - total_paid
-    date=lotto.extract_date(lotto.driver,"row-date.should-clear.futuran-now-text-400")
-    print(date)
-    print(f"Lotto's stakes: {total_stakes:,.2f}€")
-    print(f"Amount paid to players: {total_paid:,.2f}€")
-    print(f"Lotto's profit: {profit:,.2f}€")
-    lotto.write_to_csv(lotto.file_name,date,total_stakes,total_paid,profit)
+    # lotto=Lotto()
+    # lotto.driver.get("https://opaponline.opap.gr/lotto/draws-results")
+    # lotto.cookies_handler()
+    # total_stakes=lotto.count_stakes(lotto.driver,"draw-total-numbers.should-clear.empty-zero.futuran-now-text-400")
+    # total_paid=lotto.count_earnings(lotto.driver)
+    # profit = total_stakes - total_paid
+    # date=lotto.extract_date(lotto.driver,"row-date.should-clear.futuran-now-text-400")
+    # print(date)
+    # print(f"Lotto's stakes: {total_stakes:,.2f}€")
+    # print(f"Amount paid to players: {total_paid:,.2f}€")
+    # print(f"Lotto's profit: {profit:,.2f}€")
+    # lotto.write_to_csv(lotto.file_name,date,total_stakes,total_paid,profit)
+
+    eurojackpot=Eurojackpot()
+    eurojackpot.driver.get("https://www.opap.gr/en/eurojackpot-draw-results")
+    eurojackpot.cookies_handler()
+    total_stakes=eurojackpot.count_stakes(eurojackpot.driver)
+    print(total_stakes)
 
    
-    
-
+class Eurojackpot(Opap_Games):
+    def __init__(self):
+        self.driver=Opap_Games.setup_driver(self)
+        self.file_name="eurojackpot_greece_results.csv"
+   
+    def count_stakes(self,driver,stakes_class="slider-details"):
+        total_stakes=driver.find_element(By.CLASS_NAME,stakes_class).text.split("Greece")[1].strip()
+        total_stakes=float(re.sub("[^\d\.]","", total_stakes).replace(".",""))
+        return (total_stakes*2.5)
 
 
 if __name__=="__main__":
