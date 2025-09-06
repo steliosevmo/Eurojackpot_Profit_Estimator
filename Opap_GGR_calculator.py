@@ -2,6 +2,8 @@ import re
 import csv
 import os
 import logging
+import random
+import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -30,18 +32,50 @@ class OpapGames:
         self.driver = self.setup_driver()
 
     def setup_driver(self):
-        """Sets up the Chrome WebDriver with options."""
+        """Sets up the Chrome WebDriver with anti-detection options."""
         option = Options()
-        option.add_experimental_option("detach", True)
+        
+        # basic Selenium flags we need to hide
+        option.add_experimental_option("excludeSwitches", ["enable-automation"])
+        option.add_experimental_option("useAutomationExtension", False)
+        option.add_argument("--disable-blink-features=AutomationControlled")
+        
+        # fullscreen window
+        option.add_argument("--start-maximized")
+
+        # Random User-Agent για να μη φαίνεται σαν WebDriver
+        user_agents = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+        ]
+        option.add_argument(f"--user-agent={random.choice(user_agents)}")
+
+        # Ορισμός διαδρομής chromedriver
         driver_path = os.getenv("CHROMEDRIVER_PATH", "chromedriver-win64\\chromedriver-win64\\chromedriver.exe")
         service = Service(driver_path)
+
         try:
             driver = webdriver.Chrome(service=service, options=option)
-            logging.info("WebDriver started successfully.")
+
+            # Patch στο navigator.webdriver για να μην φαίνεται True
+            driver.execute_cdp_cmd(
+                "Page.addScriptToEvaluateOnNewDocument",
+                {
+                    "source": """
+                        Object.defineProperty(navigator, 'webdriver', {
+                          get: () => undefined
+                        });
+                    """
+                },
+            )
+
+            logging.info("WebDriver started successfully with anti-detection.")
             return driver
         except Exception as e:
             logging.error(f"Failed to start WebDriver: {e}")
             raise
+
 
     def cookies_handler(self):
         """Handles cookie consent popup by clicking 'Reject All'."""
@@ -148,6 +182,11 @@ class Tzoker(OpapGames):
     def __init__(self):
         super().__init__()
         self.file_name = "tzoker_results.csv"
+    # def until_end(self,):
+    #     while(True):
+    #         Tzoker().driver.find_element(By.CLASS_NAME, "btn.draw-btn-left").click()
+
+
 
 class Lotto(OpapGames):
     """Class for Lotto game logic."""
@@ -233,40 +272,45 @@ class Eurojackpot(OpapGames):
             return ""
 
 def main():
+    
     """Main function to run the estimations for each game."""
     try:
         tzoker = Tzoker()
         tzoker.driver.get("https://opaponline.opap.gr/tzoker/draws-results")
         tzoker.cookies_handler()
-        total_stakes = tzoker.count_stakes(tzoker.driver)
-        total_paid = tzoker.count_earnings(tzoker.driver)
-        profit = total_stakes - total_paid
-        date = tzoker.extract_date(tzoker.driver)
-        logging.info(f"Tzoker {date}: Stakes={total_stakes:,.2f}€, Paid={total_paid:,.2f}€, Profit={profit:,.2f}€")
-        tzoker.write_to_csv(tzoker.file_name, date, total_stakes, total_paid, profit)
+        i=0
+        while(i!=2000):
+            total_stakes = tzoker.count_stakes(tzoker.driver)
+            total_paid = tzoker.count_earnings(tzoker.driver)
+            profit = total_stakes - total_paid
+            date = tzoker.extract_date(tzoker.driver)
+            logging.info(f"Tzoker {date}: Stakes={total_stakes:,.2f}€, Paid={total_paid:,.2f}€, Profit={profit:,.2f}€")
+            tzoker.write_to_csv(tzoker.file_name, date, total_stakes, total_paid, profit)    
+            WebDriverWait(tzoker.driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "btn.draw-btn-left"))).click()
+            i+=1       
         tzoker.driver.quit()
 
-        lotto = Lotto()
-        lotto.driver.get("https://opaponline.opap.gr/lotto/draws-results")
-        lotto.cookies_handler()
-        total_stakes = lotto.count_stakes(lotto.driver, "draw-total-numbers.should-clear.empty-zero.futuran-now-text-400")
-        total_paid = lotto.count_earnings(lotto.driver)
-        profit = total_stakes - total_paid
-        date = lotto.extract_date(lotto.driver, "row-date.should-clear.futuran-now-text-400")
-        logging.info(f"Lotto {date}: Stakes={total_stakes:,.2f}€, Paid={total_paid:,.2f}€, Profit={profit:,.2f}€")
-        lotto.write_to_csv(lotto.file_name, date, total_stakes, total_paid, profit)
-        lotto.driver.quit()
+        # lotto = Lotto()
+        # lotto.driver.get("https://opaponline.opap.gr/lotto/draws-results")
+        # lotto.cookies_handler()
+        # total_stakes = lotto.count_stakes(lotto.driver, "draw-total-numbers.should-clear.empty-zero.futuran-now-text-400")
+        # total_paid = lotto.count_earnings(lotto.driver)
+        # profit = total_stakes - total_paid
+        # date = lotto.extract_date(lotto.driver, "row-date.should-clear.futuran-now-text-400")
+        # logging.info(f"Lotto {date}: Stakes={total_stakes:,.2f}€, Paid={total_paid:,.2f}€, Profit={profit:,.2f}€")
+        # lotto.write_to_csv(lotto.file_name, date, total_stakes, total_paid, profit)
+        # lotto.driver.quit()
 
-        eurojackpot = Eurojackpot()
-        eurojackpot.driver.get("https://www.opap.gr/en/eurojackpot-draw-results")
-        eurojackpot.cookies_handler()
-        total_stakes = eurojackpot.count_stakes(eurojackpot.driver)
-        total_paid = eurojackpot.count_earnings(eurojackpot.driver)
-        profit = total_stakes - total_paid
-        date = eurojackpot.extract_date()
-        logging.info(f"Eurojackpot {date}: Stakes={total_stakes:,.2f}€, Paid={total_paid:,.2f}€, Profit={profit:,.2f}€")
-        eurojackpot.write_to_csv(eurojackpot.file_name, date, total_stakes, total_paid, profit)
-        eurojackpot.driver.quit()
+        # eurojackpot = Eurojackpot()
+        # eurojackpot.driver.get("https://www.opap.gr/en/eurojackpot-draw-results")
+        # eurojackpot.cookies_handler()
+        # total_stakes = eurojackpot.count_stakes(eurojackpot.driver)
+        # total_paid = eurojackpot.count_earnings(eurojackpot.driver)
+        # profit = total_stakes - total_paid
+        # date = eurojackpot.extract_date()
+        # logging.info(f"Eurojackpot {date}: Stakes={total_stakes:,.2f}€, Paid={total_paid:,.2f}€, Profit={profit:,.2f}€")
+        # eurojackpot.write_to_csv(eurojackpot.file_name, date, total_stakes, total_paid, profit)
+        # eurojackpot.driver.quit()
     except Exception as e:
         logging.critical(f"Critical error in main: {e}")
 
