@@ -275,31 +275,35 @@ def main():
     
     """Main function to run the estimations for each game."""
     try:
-        tzoker = Tzoker()
-        tzoker.driver.get("https://opaponline.opap.gr/tzoker/draws-results")
-        tzoker.cookies_handler()
-        i=0
-        while(i!=2000):
-            total_stakes = tzoker.count_stakes(tzoker.driver)
-            total_paid = tzoker.count_earnings(tzoker.driver)
-            profit = total_stakes - total_paid
-            date = tzoker.extract_date(tzoker.driver)
-            logging.info(f"Tzoker {date}: Stakes={total_stakes:,.2f}€, Paid={total_paid:,.2f}€, Profit={profit:,.2f}€")
-            tzoker.write_to_csv(tzoker.file_name, date, total_stakes, total_paid, profit)    
-            WebDriverWait(tzoker.driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "btn.draw-btn-left"))).click()
-            i+=1       
-        tzoker.driver.quit()
+        # tzoker = Tzoker()
+        # tzoker.driver.get("https://opaponline.opap.gr/tzoker/draws-results")
+        # tzoker.cookies_handler()
+        # i=0
+        # while(i!=312):
+        #     total_stakes = tzoker.count_stakes(tzoker.driver)
+        #     total_paid = tzoker.count_earnings(tzoker.driver)
+        #     profit = total_stakes - total_paid
+        #     date = tzoker.extract_date(tzoker.driver)
+        #     logging.info(f"Tzoker {date}: Stakes={total_stakes:,.2f}€, Paid={total_paid:,.2f}€, Profit={profit:,.2f}€")
+        #     tzoker.write_to_csv(tzoker.file_name, date, total_stakes, total_paid, profit)    
+        #     WebDriverWait(tzoker.driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "btn.draw-btn-left"))).click()
+        #     i+=1       
+        # tzoker.driver.quit()
 
-        # lotto = Lotto()
-        # lotto.driver.get("https://opaponline.opap.gr/lotto/draws-results")
-        # lotto.cookies_handler()
-        # total_stakes = lotto.count_stakes(lotto.driver, "draw-total-numbers.should-clear.empty-zero.futuran-now-text-400")
-        # total_paid = lotto.count_earnings(lotto.driver)
-        # profit = total_stakes - total_paid
-        # date = lotto.extract_date(lotto.driver, "row-date.should-clear.futuran-now-text-400")
-        # logging.info(f"Lotto {date}: Stakes={total_stakes:,.2f}€, Paid={total_paid:,.2f}€, Profit={profit:,.2f}€")
-        # lotto.write_to_csv(lotto.file_name, date, total_stakes, total_paid, profit)
-        # lotto.driver.quit()
+        lotto = Lotto()
+        lotto.driver.get("https://opaponline.opap.gr/lotto/draws-results")
+        lotto.cookies_handler()
+        lotto_number_of_draws = 0
+        while(lotto_number_of_draws!=312):    
+            total_stakes = lotto.count_stakes(lotto.driver, "draw-total-numbers.should-clear.empty-zero.futuran-now-text-400")
+            total_paid = lotto.count_earnings(lotto.driver)
+            profit = total_stakes - total_paid
+            date = lotto.extract_date(lotto.driver, "row-date.should-clear.futuran-now-text-400")
+            logging.info(f"Lotto {date}: Stakes={total_stakes:,.2f}€, Paid={total_paid:,.2f}€, Profit={profit:,.2f}€")
+            lotto.write_to_csv(lotto.file_name, date, total_stakes, total_paid, profit)    
+            WebDriverWait(lotto.driver, 10).until(EC.element_to_be_clickable((By.ID, "prev-draw-button"))).click()
+            lotto_number_of_draws+=1
+        lotto.driver.quit()
 
         # eurojackpot = Eurojackpot()
         # eurojackpot.driver.get("https://www.opap.gr/en/eurojackpot-draw-results")
