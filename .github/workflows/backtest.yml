@@ -1,0 +1,52 @@
+name: Retrain and backtest GGR forecast
+
+on:
+  schedule:
+    # Roughly quarterly, a few days after OPAP's typical reporting dates.
+    - cron: "0 6 5 1,4,7,10 *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright's Chromium
+        run: playwright install --with-deps chromium
+
+      - name: Load manual ground-truth GGR figures
+        run: python -m pipeline.load_manual_ggr
+
+      - name: Best-effort scrape of OPAP IR press releases (optional cross-check)
+        run: python -m scrapers.opap_ir_scraper || true
+
+      - name: Build quarterly features
+        run: python -m pipeline.build_quarterly_features
+
+      - name: Train model
+        run: python -m forecasting.train_model
+
+      - name: Backtest against actual reported GGR
+        run: python -m forecasting.backtest
+
+      - name: Predict next period
+        run: python -m forecasting.predict
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/lottery.db data/backtest_report.csv data/ggr_model.pkl
+          git diff --cached --quiet || git commit -m "Retrain and backtest GGR forecast [automated]"
+          git push

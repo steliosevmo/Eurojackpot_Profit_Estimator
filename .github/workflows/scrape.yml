@@ -1,0 +1,40 @@
+name: Scrape latest draws
+
+on:
+  schedule:
+    # Daily, safely after Eurojackpot (Tue/Fri), Joker (Sun/Tue/Thu) and
+    # Lotto (Tue/Thu/Sat) draw+results-publication times. Each site always
+    # shows its own latest draw, so running on non-draw days is a harmless
+    # no-op (the upsert just re-writes the same row).
+    - cron: "30 22 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright's Chromium
+        run: playwright install --with-deps chromium
+
+      - name: Scrape latest draws
+        run: python -m pipeline.scrape_latest
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/lottery.db data/draws_export.csv
+          git diff --cached --quiet || git commit -m "Scrape latest draws [automated]"
+          git push
