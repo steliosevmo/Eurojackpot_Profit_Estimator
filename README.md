@@ -8,6 +8,13 @@ OPAP actually reports.
 This is still an educational/hobby project (see the original disclaimer below) — the forecasting
 model is a simple regression trained on very few data points, not investment advice.
 
+GGR depends on:
+Lotteries(34.6%):Tzoker, Lotto, Eurojackpot, Propo, PropoGoal, Super 3, Extra 5, Kino.
+Sports Betting(31.8%): Pregame-Live in betting shops, Pamestoiximan.gr, Virtual Sports
+VLTs(14.9%):Opap Play and other slot machines in regular betting shops
+Online Casino(14.3%):RNG slots , Live Casino online
+Instants and Passive(4.4%):scratch ,laiko laxeio, ethniko laxeio
+
 ## Architecture
 
 ```

@@ -1,4 +1,5 @@
-"""Walk-forward backtest: for each reporting period with a known actual GGR,
+"""
+Walk-forward backtest: for each reporting period with a known actual GGR,
 train only on strictly earlier periods, predict, then compare to what OPAP
 actually reported. This is the "test our prediction against the real report"
 loop the user asked for.

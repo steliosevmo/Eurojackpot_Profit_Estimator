@@ -1,4 +1,5 @@
-"""Train a small regression model to predict OPAP's numerical-lotteries GGR
+"""
+Train a small regression model to predict OPAP's numerical-lotteries GGR
 for a reporting period from that period's scraped draw-level features.
 
 OPAP has realistically a few dozen periods of consistent segment reporting
